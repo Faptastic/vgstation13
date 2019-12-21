@@ -1,0 +1,10 @@
+<!--
+Title: Vending UI
+Used In File(s): \code\game\machinery\vending.dm
+-->
+
+	{{if data.currently_vending}}
+    {{:helper.link('Pay', 'check' {'buy': 1})}}
+    {{:helper.link('Cancel', 'cancel' {'cancel_buying': 1})}}
+
+  dat += {"<b>You have selected [data.vending.product_name].<br>Please ensure your ID is in your ID holder or hand.</b><br>

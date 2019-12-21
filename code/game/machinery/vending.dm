@@ -735,6 +735,26 @@ var/global/num_vending_terminals = 1
 		return 1
 	return 0
 
+/obj/machinery/vending/ui_interact(mob/user, ui_key = "vend", var/datum/nanoui/ui = null, var/force_open=NANOUI_FOCUS)
+var/vendorname = (src.name)  //import the machine's name
+var/vertical = 400
+	var/data[0]
+	data["vending"] = currently_vending
+	data["product_ads"] = product_ads
+	data["premium"] = premium
+	data["product_records"] = product_records
+	data["coin_records"] = coin_records
+	data["Holiday"] = holiday
+	data["extended_inventory"] = extended_inventory
+	data["coin"] = coin
+
+
+	ui = nanomanager.try_update_ui(user, src, ui_key, ui, data, force_open)
+	if (!ui)
+		ui = new(user, src, ui_key, "vending.tmpl", name, vertical,660)
+		ui.set_initial_data(data)
+		ui.open()
+
 /obj/machinery/vending/attack_hand(mob/living/user as mob)
 	if(stat & (BROKEN))
 		to_chat(user, "<span class='notice'>The glass in \the [src] is broken, it refuses to work.</span>")
@@ -760,22 +780,29 @@ var/global/num_vending_terminals = 1
 		seconds_electrified = 0
 
 	user.set_machine(src)
-
+	ui_interact(user)
+	onclose(user, "vend")
+	return
 	var/vendorname = (src.name)  //import the machine's name
 
 	var/vertical = 400
 
 	if(src.currently_vending)
-		var/dat = "<TT><center><b>[vendorname]</b></center><hr /><br>" //display the name, and added a horizontal rule
-
+		var/dat = list()
+		dat += "<TT><hr /><br>" //display the name, and added a horizontal rule
 		dat += {"<b>You have selected [currently_vending.product_name].<br>Please ensure your ID is in your ID holder or hand.</b><br>
 			<a href='byond://?src=\ref[src];buy=1'>Pay</a> |
 			<a href='byond://?src=\ref[src];cancel_buying=1'>Cancel</a>"}
-		user << browse(dat, "window=vending")
-		onclose(user, "")
+		dat = jointext(dat,"")
+		var/datum/browser/popup = new(user, "vending", "[vendorname]", , , src)
+		popup.set_content(dat)
+		popup.open()
+		//user << browse(dat, "window=vending")
+		onclose(user, "vending")
 		return
 
-	var/dat = "<TT><center><b>[vendorname]</b></center><hr/>" //display the name, and added a horizontal rule
+	var/dat = list()
+	dat += "<TT><hr/>" //display the name, and added a horizontal rule
 	if(product_ads.len)
 		dat += "<marquee>[pick(product_ads)]</marquee><hr/>"
 	dat += "<br><b>Select an item: </b><br><br>" //the rest is just general spacing and bolding
@@ -861,8 +888,10 @@ var/global/num_vending_terminals = 1
 			dat += "Edit mode is on."
 		if(!account_first_linked)
 			dat += "<br><br><i>Note: Remember to slide your ID on this machine to link your account. Once this is done, sliding your ID will enable editing and loading.</i>"
-
-	user << browse(dat, "window=vending;size=400x[vertical]")
+	dat = jointext(dat,"")
+	var/datum/browser/popup = new(user, "vending", "[vendorname]", 400, vertical, src)
+	popup.set_content(dat)
+	popup.open()
 	onclose(user, "vending")
 
 // returns the wire panel text
